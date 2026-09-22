@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
 class Program
 {
@@ -7,12 +8,14 @@ class Program
     static string name;
 
     static int money = 0;
+    static int ivresse = 0;
+
     static bool halfPrice = false;
     static bool angry = false;
     static bool upset = false;
     static bool VIP = false;
-    static bool norbertRequest = false;
-    static bool getLime = false;
+
+    static List<string> inventory = new List<string>();
 
     static void Main()
     {
@@ -173,11 +176,13 @@ class Program
     static void HandleDrinkChoice(string name, int ageNum, string mode)
     {
         Console.WriteLine($"Vous avez actuellement {money} crédits.");
+        Console.WriteLine($"Votre niveau d'ivresse est de {ivresse}.");
+
         if (!VIP)
         {
             Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (5 crédits)    2. Royal Zgueg (20 crédits)   3. Jus de Norbert (10 crédits)   4. Bière (5 crédits)   5. Eau   6. Soupe du chef (30 crédits)   7. Bière (5 crédits)   8. Vin (20 crédits)");
         }
-        else if (VIP)
+        else
         {
             Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (2 crédits)    2. Royal Zgueg (10 crédits)   3. Jus de Norbert (5 crédits)   4. Bière (2 crédits)   5. Eau   6. Soupe du chef (15 crédits)   7. Bière (2 crédits)   8. Vin (10 crédits)");
         }
@@ -234,34 +239,49 @@ class Program
         switch (choixNum)
         {
             case 1:
+                ivresse += 10;
                 Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
                 break;
+
             case 2:
+                ivresse += 25;
                 Console.WriteLine("Vous avez choisi le Royal Zgueg, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
                 break;
+
             case 3:
                 Console.WriteLine("Vous avez choisi le jus de Norbert, la barman vous indique un étrange stand où se trouve un gnome vendant une limonade aux arômes subtiles");
                 HandleLimeChoice(name, ageNum, mode);
                 break;
+
             case 4:
+                ivresse += 10;
                 Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
                 break;
+
             case 5:
                 Console.WriteLine("Vous avez choisi l'eau, tout le monde dans le bar vous dévisage comme si vous étiez le problème, votre verre arrive et pétille la serveuse vous explique que c'est dû à des restes de liquide vaisselle. Après avoir longuement hésité vous avez fini par boire l'eau, ce qui devait être une simple blague a tourné à l'homicide involontaire, pas de place pour les radins ici...");
                 HandleDrinkChoice(name, ageNum, mode);
                 break;
+
             case 6:
+                ivresse -= 10;
+                if (ivresse < 0) ivresse = 0;
                 Console.WriteLine("Vous avez choisi la soupe du chef, un met onéreux mais quasi vital dans cet établissement, ça doit bien être la seule manière de se déshiniber tout en gardant un souvenir d'une soirée stable");
                 break;
+
             case 7:
+                ivresse += 10;
                 Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
                 break;
+
             case 8:
+                ivresse += 15;
                 Console.WriteLine("Vous avez choisi le vin... savez-vous seulement où vous êtes ? La barman vous ramène le sourire au lèvre une sélection des bouteilles de la cave parmis lesquelles se trouve : une cuvée canard WC, du liquide vaisselle, du sans-plomb de 98 une excellente année");
                 break;
         }
 
         Console.WriteLine($"Il vous reste {money} crédits.");
+        DisplayIvresseState();
     }
 
     static void HandleLimeChoice(string name, int ageNum, string mode)
@@ -276,7 +296,7 @@ class Program
         }
         else if (choixNum == 2)
         {
-            Console.WriteLine("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez dont me rencontrer pour affaires je suppose ?");
+            Console.WriteLine("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose ?");
             HandleNorbertChoice(name, ageNum, mode);
         }
         else
@@ -293,19 +313,39 @@ class Program
         int choixNum = int.Parse(choix);
         if (choixNum == 1)
         {
-            norbertRequest = true;
+            inventory.Add("Commande de Norbert");
             HandleDrinkChoice(name, ageNum, mode);
         }
         else if (choixNum == 2)
         {
             Console.WriteLine("Norbert l'air déçu s'en va en laissant son stand derrière lui, vous décidez de récupérer une flasque de sa limonade sans trop savoir quoi en faire");
-            getLime = true;
+            inventory.Add("Flacon de limonade");
             HandleDrinkChoice(name, ageNum, mode);
         }
         else
         {
             Console.WriteLine("Choix invalide");
             HandleNorbertChoice(name, ageNum, mode);
+        }
+    }
+
+    static void DisplayIvresseState()
+    {
+        string etat = ivresse switch
+        {
+            < 10 => "Vous êtes parfaitement sobre, attention à ne pas passer pour un inspecteur du travail",
+            < 25 => "Vous êtes déjà au dessus du seuil d'alcoolémie et pourtant rien ne semble pouvoir vous arrêter",
+            < 40 => "Vous ne vous rappelez pas la dernière fois que vous avez",
+            < 60 => "Vous ne vous rappelez ni de la dernière fois que vous avez autant bu ni de votre prénom",
+            _ => "L'alcool a complètement dillué votre sang et irrigue maintenant vos veines... Félicitations vous êtes devenu une sorte d'attraction locale, le simple fait de passer à côté de vous suffi à apaiser les coeurs les plus lourds      Fin numéro 09 69 39 40 20 : coma idyllique"
+        };
+
+        Console.WriteLine($"Votre ivresse est maintenant de {ivresse}. {etat}");
+        if (ivresse >= 60)
+        {
+            ivresse = 0;
+            inventory = new List<string>();
+            Main();
         }
     }
 }

@@ -1,0 +1,15 @@
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\bin\Debug\net10.0\Cours Programmation 1.cs.exe
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\bin\Debug\net10.0\Cours Programmation 1.cs.deps.json
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\bin\Debug\net10.0\Cours Programmation 1.cs.runtimeconfig.json
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\bin\Debug\net10.0\Cours Programmation 1.cs.dll
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\bin\Debug\net10.0\Cours Programmation 1.cs.pdb
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.AssemblyInfoInputs.cache
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.AssemblyInfo.cs
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.csproj.CoreCompileInputs.cache
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.dll
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\refint\Cours Programmation 1.cs.dll
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.pdb
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Programmation 1.cs.genruntimeconfig.cache
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\ref\Cours Programmation 1.cs.dll
+C:\Users\tom.paul\Documents\AEcole\Cours Programmation 1.cs\Cours Programmation 1.cs\obj\Debug\net10.0\Cours Pr.80C15C19.Up2Date

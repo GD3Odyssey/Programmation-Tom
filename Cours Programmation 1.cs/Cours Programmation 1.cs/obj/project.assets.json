@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj",
+      "projectUniqueName": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj",
       "projectName": "Cours Programmation 1.cs",
-      "projectPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj",
+      "projectPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj",
       "packagesPath": "C:\\Users\\tom.paul\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\obj\\",
+      "outputPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\tom.paul\\AppData\\Roaming\\NuGet\\NuGet.Config",

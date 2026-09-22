@@ -1,9 +1,9 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\",
+  "WorkspaceRootPath": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C9DB44F8-5689-7285-BA27-780C5CAB34D2}|Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj|c:\\users\\tom.paul\\documents\\aecole\\cours programmation 1.cs\\cours programmation 1.cs\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{C9DB44F8-5689-7285-BA27-780C5CAB34D2}|Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj|c:\\users\\tom.paul\\documents\\aecole\\programmation-tom\\cours programmation 1.cs\\cours programmation 1.cs\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{C9DB44F8-5689-7285-BA27-780C5CAB34D2}|Cours Programmation 1.cs\\Cours Programmation 1.cs.csproj|solutionrelative:cours programmation 1.cs\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -20,13 +20,13 @@
               "$type": "Document",
               "DocumentIndex": 0,
               "Title": "Program.cs",
-              "DocumentMoniker": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Program.cs",
+              "DocumentMoniker": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Program.cs",
               "RelativeDocumentMoniker": "Cours Programmation 1.cs\\Program.cs",
-              "ToolTip": "C:\\Users\\tom.paul\\Documents\\AEcole\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Program.cs",
+              "ToolTip": "C:\\Users\\tom.paul\\Documents\\AEcole\\Programmation-Tom\\Cours Programmation 1.cs\\Cours Programmation 1.cs\\Program.cs",
               "RelativeToolTip": "Cours Programmation 1.cs\\Program.cs",
-              "ViewState": "AgIAABcBAAAAAAAAAAAAANUAAACHAAAAAAAAAA==",
+              "ViewState": "AgIAAJoAAAAAAAAAAAAcwLMAAABQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-16T11:20:12.969Z",
+              "WhenOpened": "2026-09-22T14:06:21.182Z",
               "EditorCaption": ""
             }
           ]

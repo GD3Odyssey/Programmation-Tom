@@ -10,6 +10,9 @@ class Program
     static bool halfPrice = false;
     static bool angry = false;
     static bool upset = false;
+    static bool VIP = false;
+    static bool norbertRequest = false;
+    static bool getLime = false;
 
     static void Main()
     {
@@ -120,11 +123,6 @@ class Program
     {
         switch (name)
         {
-            case "Je suis un lapin crétin":
-                Console.WriteLine("Serveuse : Bienvenue Tom... encore torché, nous avons la solution pour que vous le restiez, entrez !");
-                HandleDrinkChoice(name, ageNum, mode);
-                break;
-
             case "Romain":
                 Console.WriteLine(ageNum < 27
                     ? "Serveuse : Notre fidèle VIP, BIENVENUE (je l'imaginais plus âgé)"
@@ -162,6 +160,7 @@ class Program
         {
             Console.WriteLine("Vous faites mine d'accepter les avances mais retardez votre départ, vous obtenez un traitement de faveur au Royal Zgueg, vous avez accès à l'entièreté de la carte à moitié prix");
             halfPrice = true;
+            VIP = true;
             HandleDrinkChoice(name, ageNum, mode);
         }
         else
@@ -174,7 +173,14 @@ class Program
     static void HandleDrinkChoice(string name, int ageNum, string mode)
     {
         Console.WriteLine($"Vous avez actuellement {money} crédits.");
-        Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (5 crédits)    2. Royal Zgueg (20 crédits)   3. Jus de Norbert (10 crédits)   4. Bière (5 crédits)   5. Eau   6. Soupe du chef (30 crédits)   7. Bière (5 crédits)   8. Vin (20 crédits)");
+        if (!VIP)
+        {
+            Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (5 crédits)    2. Royal Zgueg (20 crédits)   3. Jus de Norbert (10 crédits)   4. Bière (5 crédits)   5. Eau   6. Soupe du chef (30 crédits)   7. Bière (5 crédits)   8. Vin (20 crédits)");
+        }
+        else if (VIP)
+        {
+            Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (2 crédits)    2. Royal Zgueg (10 crédits)   3. Jus de Norbert (5 crédits)   4. Bière (2 crédits)   5. Eau   6. Soupe du chef (15 crédits)   7. Bière (2 crédits)   8. Vin (10 crédits)");
+        }
 
         choix = Console.ReadLine();
         int choixNum = int.Parse(choix);
@@ -282,18 +288,18 @@ class Program
 
     static void HandleNorbertChoice(string name, int ageNum, string mode)
     {
-        Console.WriteLine("Norbert : Je vous propose un marché, je vous offre une limonade à moitié prix si vous acceptez de me livrer un message à un certain Tom qui se trouve dans ce bar...   1. Accepter   2. Refuser");
+        Console.WriteLine("Norbert : D'abord rendez moi un service, retournez au bar et demandez la soupe du chef en la mettant sur mon compte !   1. Retourner au bar   2. Refuser le marché");
         choix = Console.ReadLine();
         int choixNum = int.Parse(choix);
         if (choixNum == 1)
         {
-            Console.WriteLine("Vous acceptez le marché et Norbert vous tend une bouteille de limonade, vous vous dirigez vers Tom et lui remettez le message de Norbert... Tom : Merci mon ami, je savais que je pouvais compter sur toi... Vous avez gagné la confiance de Tom et il vous offre un verre de Royal Zgueg en guise de remerciement");
-            halfPrice = true;
+            norbertRequest = true;
             HandleDrinkChoice(name, ageNum, mode);
         }
         else if (choixNum == 2)
         {
-            Console.WriteLine("Vous refusez le marché et Norbert vous regarde avec dédain... Norbert : Très bien, mais sachez que vous venez de perdre une opportunité unique dans votre vie... Vous quittez le bar avec un goût amer dans la bouche");
+            Console.WriteLine("Norbert l'air déçu s'en va en laissant son stand derrière lui, vous décidez de récupérer une flasque de sa limonade sans trop savoir quoi en faire");
+            getLime = true;
             HandleDrinkChoice(name, ageNum, mode);
         }
         else

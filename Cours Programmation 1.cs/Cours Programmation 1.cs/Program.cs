@@ -1,351 +1,534 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 class Program
 {
-    static string age;
-    static string choix;
-    static string name;
-
-    static int money = 0;
-    static int ivresse = 0;
-
-    static bool halfPrice = false;
-    static bool angry = false;
-    static bool upset = false;
-    static bool VIP = false;
-
-    static List<string> inventory = new List<string>();
-
     static void Main()
     {
-        Console.OutputEncoding = System.Text.Encoding.UTF8;
-        Console.WriteLine("À l'approche du célébrissime Royal Zgueg, vous vous remémorez les risques que vous encourez en entrant dans un pareil endroit, cette nuit les morts vivants pullulent vous n'avez qu'à attendre l'aube mais surtout vous devez échapper à l'emprise de ce lieu maudit qui semble avaler les gens qui y pénètrent...");
-        Console.WriteLine("Serveuse : Bienvenue au Royal Zgueg, souhaitez-vous une table ou simplement commander ? 1.Une table   2.Je veux juste boire jusqu'à l'aube");
-        choix = Console.ReadLine();
+        Console.OutputEncoding = Encoding.UTF8;
+        Game game = new Game();
+        game.Start();
+    }
+}
+class Player
+{
+    public int drunkenness;   // equivalent d'une barre de vie mais inversée, est aussi un système de réputation déguisé certaines interactions ne se déclenchent que à un certains niveau d'ivresse
+    public int lethalDrunkenness;
+    public int power;
+    public int money;
 
-        int choixInt;
-        if (!int.TryParse(choix, out choixInt))
-        {
-            Console.WriteLine("Choix invalide");
-            Main();
-            return;
-        }
+    public bool blurryState = false;
 
-        if (choixInt == 1)
-        {
-            Console.WriteLine("Serveuse : Vous avez choisi une table, je dois vérifier votre âge");
-            age = Console.ReadLine();
-            HandleAge(age, "table");
-        }
-        else if (choixInt == 2)
-        {
-            Console.WriteLine("Serveuse : Vous êtes au bon endroit pour ça, mais avant, quel âge avez-vous ?");
-            age = Console.ReadLine();
-            HandleAge(age, "boire");
-        }
-        else
-        {
-            Console.WriteLine("Choix invalide");
-            Main();
-        }
+    public Player(int drunkenness = 0)
+    {
+        this.drunkenness = drunkenness;
+        this.lethalDrunkenness = 100;
+        this.power = 10;
+        this.money = 100;
+    }
+}
+class Ennemi
+{
+    public int hp;
+    public int hpMax;
+    public int power;
+    public int moneyDrop;
+
+    Random rng = new Random();
+
+    private bool aExpliquePileOuFace = false;
+    private bool aExpliqueVisionFloue = false;
+
+    public Ennemi(int hpMax, int power, int moneyDrop)
+    {
+        this.hpMax = hpMax;
+        this.hp = hpMax;
+        this.power = power;
+        this.moneyDrop = moneyDrop;
     }
 
-    static void HandleAge(string age, string mode)
+    public bool InfligerDegats(int degats)
     {
-        int ageNum = int.Parse(age);
+        this.hp -= degats;
+        this.hp -= Math.Clamp(this.hp, 0, this.hpMax);
+        return (this.hp == 0);
+    }
 
-        if (name == "Romain")
+    public void AttaquePileOuFace(Player player)
+    {
+        Console.WriteLine("Le chef lance l'attaque Lancer de bières, il envoi une salve de bouteille en espérant tomber sur des bières");
+        Console.WriteLine();
+
+        if (!aExpliquePileOuFace)
         {
-            money = 200;
-        }
-        else if (ageNum > 27)
-        {
-            money = 100;
-        }
-        else
-        {
-            money = 30;
+            Console.WriteLine("Lancer de bières : effectue un pile ou face, s'il est gagnant inflige 5 point de dégât et relance un pile ou face jusqu'à le perdre");
+            Console.WriteLine();
+            aExpliquePileOuFace = true;
         }
 
-        if (ageNum < 18)
+        while (true)
         {
-            if (mode == "table")
+            bool reussite = rng.Next(2) == 0;
+
+            if (reussite)
             {
-                Console.WriteLine("Serveuse : T'es mineur tu rentres pas DEHORS... Vous tentez de rentrer chez vous mais finissez massacré par des morts vivants... C'était déjà pas l'idée du siècle de venir dans un endroit aussi peu fréquenté mais vous avez fait fort en donnant votre âge, l'honnêteté ne paye plus depuis longtemps dans ce monde...");
-                HandleAge(age, mode);
+                player.drunkenness += 5;
+                Console.WriteLine("Pile ! Votre ivresse augmente de 5...");
+                Console.WriteLine($"Votre ivresse est maintenant de {player.drunkenness}.");
+                Console.WriteLine();
             }
             else
             {
-                Console.WriteLine("Serveuse : Merde t'es mineur, tiens prend un verre et rentre chez toi... Vous avez passé la nuit ivre mort à essayer de rentrer chez vous en vain, grâce à vos beuglements aucun mort vivant n'a osé vous attaquer mais vous avez fini par trébucher sur votre jambe et vous noyer dans une flaque d'eau... la vie n'épargne plus les simples d'esprits");
-                HandleAge(age, mode);
+                Console.WriteLine("Face... La série s'interrompt, le chef vous observe en silence avec dépit.");
+                Console.WriteLine();
+                break;
             }
+        }
+    }
+    public void AttaqueVisionFloue(Player player)
+    {
+        Console.WriteLine("Le chef lance l'attaque Soupe suspecte, il envoi une louche de sa soupe en direction du joueur");
+        Console.WriteLine();
+
+        if (!aExpliqueVisionFloue)
+        {
+            Console.WriteLine("Soupe suspecte : inflige 10 points de dégât et a 1 chance sur 4 d'infliger le statut Vision floue qui fait passer le prochain tour de l'adversaire");
+            Console.WriteLine();
+            aExpliqueVisionFloue = true;
+        }
+
+        player.drunkenness += 10;
+        Console.WriteLine("Votre ivresse augmente de 10.");
+        Console.WriteLine($"Votre ivresse est maintenant de {player.drunkenness}.");
+        Console.WriteLine();
+
+        bool infligeVisionFloue = rng.Next(4) == 0; // 1 chance sur 4 d'infliger le statut Vision floue
+
+        if (infligeVisionFloue)
+        {
+            player.blurryState = true;
+            Console.WriteLine("Votre vision devient floue... Vous passez le tour suivant à vous cogner partout.");
+            Console.WriteLine();
+        }
+        else
+        {
+            Console.WriteLine("Vous parvenez à garder vos esprits... mais le combat n'est pas encore fini");
+            Console.WriteLine();
+        }
+    }
+}
+abstract class Page
+{
+    protected Game game;
+
+    public Page(Game game)
+    {
+        this.game = game;
+    }
+
+    protected int AskInt()
+    {
+        int v;
+        while (!int.TryParse(Console.ReadLine(), out v)) { }
+        return v;
+    }
+
+    public abstract void Run();
+}
+class Game
+{
+    public Player player = new Player();
+
+    public List<string> inventory = new List<string>();
+    public List<string> choices = new List<string>();
+    private List<Page> pages = new List<Page>();
+
+    private int currentPage = 0;
+
+    public string mode = "";
+
+    public Game()
+    {
+        RegisterPages();
+    }
+
+    private void RegisterPages()
+    {
+        pages.Add(new IntroPage(this)); //page 0
+        pages.Add(new DrinkPage(this)); //page 1
+        pages.Add(new NorbertLemonPage(this)); //page 2
+        pages.Add(new LemonRefusePage(this)); //page 3
+        pages.Add(new CombatChefPage(this)); //page 4
+    }
+
+    public void Start()
+    {
+        currentPage = 0;
+        RunCurrentPage();
+    }
+
+    public void RunCurrentPage()
+    {
+        pages[currentPage].Run();
+    }
+
+    public void GoToPage(int index)
+    {
+        currentPage = index;
+        RunCurrentPage();
+    }
+
+    public void Restart()
+    {
+        player = new Player();
+        inventory.Clear();
+        choices.Clear();
+        Start();
+    }
+
+    public void Write(string text)
+    {
+        int width = Console.WindowWidth - 2;
+        string[] mots = text.Split(' ');
+
+        string ligne = "";
+
+        foreach (string mot in mots)
+        {
+            if ((ligne + mot).Length > width)
+            {
+                Console.WriteLine(ligne);
+                ligne = "";
+            }
+            ligne += mot + " ";
+        }
+
+        Console.WriteLine(ligne);
+    }
+}
+class IntroPage : Page
+{
+    public IntroPage(Game game) : base(game) { }
+
+    public override void Run()
+    {
+        game.Write("À l'approche du célébrissime Royal Zgueg, vous vous remémorez les risques que vous encourez en entrant dans un pareil endroit, cette nuit les morts vivants pullulent vous n'avez qu'à attendre l'aube mais surtout vous devez échapper à l'emprise de ce lieu maudit qui semble avaler les gens qui y pénètrent...");
+        Console.WriteLine();
+        game.Write("Serveuse : Bienvenue au Royal Zgueg, souhaitez-vous une table ou simplement commander ?   1.Une table   2.Je veux juste boire jusqu'à l'aube");
+        Console.WriteLine();
+
+        int choix = AskInt();
+
+        if (choix == 1)
+        {
+            game.mode = "table";
+            game.choices.Add("Choix : Table");
+            game.player.money -= 20;
+            game.Write($"Vous payez 20 crédits. Il vous reste {game.player.money} crédits.");
+            Console.WriteLine();
+        }
+        else if (choix == 2)
+        {
+            game.mode = "boire";
+            game.choices.Add("Choix : Boire");
+        }
+        else
+        {
+            game.Write("Choix invalide");
+            Console.WriteLine();
+            Run();
             return;
         }
 
-        if (ageNum >= 120)
+        game.GoToPage(1);
+    }
+}
+
+class DrinkPage : Page
+{
+    public DrinkPage(Game game) : base(game) { }
+
+    public override void Run()
+    {
+        game.Write("Serveuse : Que souhaitez-vous boire ?");
+        Console.WriteLine();
+        game.Write($"Vous avez actuellement {game.player.money} crédits.");
+        game.Write($"Votre niveau d'ivresse est de {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
+        Console.WriteLine();
+
+        int beer = 5;
+        int zgueg = 20;
+        int norbert = 10;
+        int soupe = 30;
+
+        game.Write($"1. Bière ({beer} crédits)    2. Royal Zgueg ({zgueg} crédits)   3. Jus de Norbert ({norbert} crédits)   4. Soupe du chef ({soupe} crédits)");
+        Console.WriteLine();
+
+        if (game.inventory.Contains("Commande de Norbert"))
         {
-            if (mode == "table")
-            {
-                Console.WriteLine("Serveuse : Un mort vivant ? SORTEZ !!! Vous vous êtes fais tuer, les gens dans ce bar ont vraiment l'air à cran...");
-                HandleAge(age, mode);
-            }
-            else
-            {
-                Console.WriteLine("Serveuse : Les morts vivants aussi devrez pouvoir se prélasser... MAIS PAS CE SOIR !!! Vous vous êtes fais tuer, les gens dans ce bar ont vraiment l'air à cran...");
-                HandleAge(age, mode);
-            }
+            game.Write("5. Utiliser le bon de commande de Norbert");
+            Console.WriteLine();
+        }
+
+        int choix = AskInt();
+
+        if (choix == 5 && game.inventory.Contains("Commande de Norbert"))
+        {
+            game.inventory.Remove("Commande de Norbert");
+            game.choices.Add("Utilisation du bon de commande");
+            game.Write("Vous utilisez le bon de commande de Norbert et êtes convié en cuisine pour voir le chef");
+            Console.WriteLine();
+            game.GoToPage(4);
             return;
         }
 
-        if (ageNum < 27)
+        int price = choix switch
         {
-            Console.WriteLine(mode == "table"
-                ? "Serveuse : Bienvenue, votre nom ?"
-                : "Serveuse : Aussi jeune et déjà des problèmes, t'es au bon endroit mon pote, ton nom ?");
-            money -= 20;
-            Console.WriteLine($"Vous payez 20 crédits pour la table. Il vous reste {money} crédits.");
-        }
-        else
-        {
-            Console.WriteLine(mode == "table"
-                ? "Serveuse : Et vous venez encore ici à votre grand âge... pffff, et votre prénom ?"
-                : "Serveuse : Et ca se met encore des mines à votre grand âge... je compatis, votre prénom ?");
-            money -= 20;
-            Console.WriteLine($"Vous payez 20 crédits pour la table. Il vous reste {money} crédits.");
-        }
-
-        name = Console.ReadLine();
-
-        if (name == "Romain") money = 200;
-
-        HandleName(name, ageNum, mode);
-    }
-
-    static void HandleName(string name, int ageNum, string mode)
-    {
-        switch (name)
-        {
-            case "Romain":
-                Console.WriteLine(ageNum < 27
-                    ? "Serveuse : Notre fidèle VIP, BIENVENUE (je l'imaginais plus âgé)"
-                    : "Serveuse : Notre fidèle VIP, Bienvenue");
-                HandleDrinkChoice(name, ageNum, mode);
-                break;
-
-            case "Paul":
-                HandlePaulChoice(name, ageNum, mode);
-                break;
-
-            default:
-                Console.WriteLine("Serveuse : Bienvenue " + name);
-                HandleDrinkChoice(name, ageNum, mode);
-                break;
-        }
-    }
-
-    static void HandlePaulChoice(string name, int ageNum, string mode)
-    {
-        Console.WriteLine("La serveuse appelle le gérant du bar qui se met à une fenêtre et vous tend un papier :Tom t'aime secrètement et souhaite partager sa vie avec toi... 1. Partager sa vie avec Tom   2. Rejeter Tom   3. Faire miroiter un amour réciproque");
-        choix = Console.ReadLine();
-
-        int choixNum = int.Parse(choix);
-
-        if (choixNum == 1)
-        {
-            Console.WriteLine("Tom et toi partez vers l'Ouest sous un soleil couchant vers une probable meilleure vie, nulle ne sait ce qu'il est arrivé de vous et de votre amour interdit...");
-        }
-        else if (choixNum == 2)
-        {
-            Console.WriteLine("Tom, fou de chagrin met fin à ses jours, vous ne pouvez vous délecter de l'un des breuvages du Royal Zgueg avant de vous être débarasser du corps ce qui vous épuise");
-        }
-        else if (choixNum == 3)
-        {
-            Console.WriteLine("Vous faites mine d'accepter les avances mais retardez votre départ, vous obtenez un traitement de faveur au Royal Zgueg, vous avez accès à l'entièreté de la carte à moitié prix");
-            halfPrice = true;
-            VIP = true;
-            HandleDrinkChoice(name, ageNum, mode);
-        }
-        else
-        {
-            Console.WriteLine("Vous jouez la carte de la folie et poussez des cris de goule, Tom n'y est pas insensible, il sort une hache... Votre dépouille est servie comme plat du jour, la prochaine fois on choisit parmis les choix proposés et on ne s'improvise pas casseur de jeu :)");
-            Main();
-        }
-    }
-
-    static void HandleDrinkChoice(string name, int ageNum, string mode)
-    {
-        Console.WriteLine($"Vous avez actuellement {money} crédits.");
-        Console.WriteLine($"Votre niveau d'ivresse est de {ivresse}.");
-
-        if (!VIP)
-        {
-            Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (5 crédits)    2. Royal Zgueg (20 crédits)   3. Jus de Norbert (10 crédits)   4. Bière (5 crédits)   5. Eau   6. Soupe du chef (30 crédits)   7. Bière (5 crédits)   8. Vin (20 crédits)");
-        }
-        else
-        {
-            Console.WriteLine("Serveuse : Que souhaitez-vous boire ? 1. Bière (2 crédits)    2. Royal Zgueg (10 crédits)   3. Jus de Norbert (5 crédits)   4. Bière (2 crédits)   5. Eau   6. Soupe du chef (15 crédits)   7. Bière (2 crédits)   8. Vin (10 crédits)");
-        }
-
-        choix = Console.ReadLine();
-        int choixNum = int.Parse(choix);
-
-        int price = choixNum switch
-        {
-            1 => 5,
-            2 => 20,
-            3 => 10,
-            4 => 10,
-            5 => 0,
-            6 => 30,
-            7 => 10,
-            8 => 20,
+            1 => beer,
+            2 => zgueg,
+            3 => norbert,
+            4 => soupe,
             _ => -1
         };
 
         if (price == -1)
         {
-            Console.WriteLine("Choix invalide");
-            HandleDrinkChoice(name, ageNum, mode);
+            game.Write("Choix invalide.");
+            Console.WriteLine();
+            Run();
+            return;
         }
 
-        if (halfPrice) price /= 2;
-
-        if (money < price)
+        if (game.player.money < price)
         {
-            if (upset)
-            {
-                Console.WriteLine($"Serveuse : Bon allez tu dégages !! Vous avez été mis à la porte, la serveuse en a profité pour faire gagner un fût de Royal Zgueg à quiconque ramènera votre dépouille... c'est bien tous ce que vous valez avec votre manie à jouer avec les nerfs des gens");
-                angry = false;
-                upset = false;
-                HandleDrinkChoice(name, ageNum, mode);
-            }
-            else if (angry)
-            {
-                Console.WriteLine($"Serveuse : Je t'ai déja dit que t'avais pas assez de crédits ({money}) pour ça tu fais exprès...");
-                upset = true;
-                HandleDrinkChoice(name, ageNum, mode);
-            }
-            else
-            {
-                Console.WriteLine($"Serveuse : Vous n'avez pas assez de crédits ({money}) pour payer {price}.");
-                angry = true;
-                HandleDrinkChoice(name, ageNum, mode);
-            }
+            game.Write($"Serveuse : Vous n'avez pas assez de crédits ({game.player.money}) pour payer {price}.");
+            Console.WriteLine();
+            game.choices.Add("Choix invalide : Pas assez d'argent");
+            Run();
+            return;
         }
 
-        money -= price;
+        game.player.money -= price;
 
-        switch (choixNum)
+        switch (choix)
         {
             case 1:
-                ivresse += 10;
-                Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
+                game.choices.Add("Boisson : Bière");
+                game.player.drunkenness += 10;
+                game.player.power += 5;
+                game.Write("Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout");
+                Console.WriteLine();
                 break;
 
             case 2:
-                ivresse += 25;
-                Console.WriteLine("Vous avez choisi le Royal Zgueg, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
+                game.choices.Add("Boisson : Royal Zgueg");
+                game.player.drunkenness += 30;
+                game.player.power += 20;
+                game.Write("Vous avez choisi le Royal Zgueg, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
+                Console.WriteLine();
                 break;
 
             case 3:
-                Console.WriteLine("Vous avez choisi le jus de Norbert, la barman vous indique un étrange stand où se trouve un gnome vendant une limonade aux arômes subtiles");
-                HandleLimeChoice(name, ageNum, mode);
-                break;
+                game.choices.Add("Boisson : Jus de Norbert");
+                game.Write("Vous avez choisi le jus de Norbert, la barman vous indique un étrange stand où se trouve un gnome vendant une limonade aux arômes subtiles");
+                Console.WriteLine();
+                game.GoToPage(2);
+                return;
 
             case 4:
-                ivresse += 10;
-                Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
-                break;
-
-            case 5:
-                Console.WriteLine("Vous avez choisi l'eau, tout le monde dans le bar vous dévisage comme si vous étiez le problème, votre verre arrive et pétille la serveuse vous explique que c'est dû à des restes de liquide vaisselle. Après avoir longuement hésité vous avez fini par boire l'eau, ce qui devait être une simple blague a tourné à l'homicide involontaire, pas de place pour les radins ici...");
-                HandleDrinkChoice(name, ageNum, mode);
-                break;
-
-            case 6:
-                ivresse -= 10;
-                if (ivresse < 0) ivresse = 0;
-                Console.WriteLine("Vous avez choisi la soupe du chef, un met onéreux mais quasi vital dans cet établissement, ça doit bien être la seule manière de se déshiniber tout en gardant un souvenir d'une soirée stable");
-                break;
-
-            case 7:
-                ivresse += 10;
-                Console.WriteLine(ageNum < 27 ? "Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout" : "Vous avez choisi une bière, vous adoreriez pouvoir vous permettre d'en prendre une autre mais... ON SE CALME, vu votre âge vous êtes complètement fauché");
-                break;
-
-            case 8:
-                ivresse += 15;
-                Console.WriteLine("Vous avez choisi le vin... savez-vous seulement où vous êtes ? La barman vous ramène le sourire au lèvre une sélection des bouteilles de la cave parmis lesquelles se trouve : une cuvée canard WC, du liquide vaisselle, du sans-plomb de 98 une excellente année");
-                break;
+                game.choices.Add("Boisson : Soupe du chef");
+                game.Write("Vous avez choisi la soupe du chef et êtes convié en cuisine afin de le voir");
+                Console.WriteLine();
+                game.GoToPage(4);
+                return;
         }
 
-        Console.WriteLine($"Il vous reste {money} crédits.");
-        DisplayIvresseState();
+        game.Write($"Il vous reste {game.player.money} crédits.");
+        Console.WriteLine();
+
+        if (game.player.drunkenness >= game.player.lethalDrunkenness)
+        {
+            game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance et la soirée recommence depuis le début.");
+            Console.WriteLine();
+            game.Restart();
+            return;
+        }
+
+        Run();
     }
+}
 
-    static void HandleLimeChoice(string name, int ageNum, string mode)
+class NorbertLemonPage : Page
+{
+    public NorbertLemonPage(Game game) : base(game) { }
+
+    public override void Run()
     {
-        Console.WriteLine("Le gnome d'un geste de la main vous indique sa limonade...   1. Tester la limonade   2. Rejeter l'offre");
-        choix = Console.ReadLine();
-        int choixNum = int.Parse(choix);
-        if (choixNum == 1)
+        game.Write("Le gnome d'un geste de la main vous indique sa limonade...   1. Tester la limonade   2. Rejeter l'offre");
+        Console.WriteLine();
+
+        int choix = AskInt();
+
+        if (choix == 1)
         {
-            Console.WriteLine("Vous goûtez à la limonade et vous sentez immédiatement transporté dans un monde où vous voyez les sons et entendez les couleurs... Vous vous réveillez dénudé et enchainé, vous allez passer le reste de votre vie à servir Norbert dans sa quête de perfection de son breuvage en tant que testeur, c'est surement là où la vie voulez vous mener...");
-            HandleDrinkChoice(name, ageNum, mode);
+            game.choices.Add("Test limonade");
+            game.player.drunkenness += 20;
+            game.player.power += 10;
+            game.GoToPage(1);
         }
-        else if (choixNum == 2)
+        else if (choix == 2)
         {
-            Console.WriteLine("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose ?");
-            HandleNorbertChoice(name, ageNum, mode);
+            game.GoToPage(3);
         }
         else
         {
-            Console.WriteLine("Choix invalide");
-            HandleLimeChoice(name, ageNum, mode);
+            game.Write("Choix invalide.");
+            Console.WriteLine();
+            Run();
         }
     }
+}
 
-    static void HandleNorbertChoice(string name, int ageNum, string mode)
+class LemonRefusePage : Page
+{
+    public LemonRefusePage(Game game) : base(game) { }
+
+    public override void Run()
     {
-        Console.WriteLine("Norbert : D'abord rendez moi un service, retournez au bar et demandez la soupe du chef en la mettant sur mon compte !   1. Retourner au bar   2. Refuser le marché");
-        choix = Console.ReadLine();
-        int choixNum = int.Parse(choix);
-        if (choixNum == 1)
+        game.Write("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose, d'abord retournez au bar et ramenez moi une soupe, récupérez là gratuitement via ce bon de commande");
+        game.Write("1. Accepter le marché   2. Refuser le marché");
+        Console.WriteLine();
+
+        int choix = AskInt();
+
+        if (choix == 1)
         {
-            inventory.Add("Commande de Norbert");
-            HandleDrinkChoice(name, ageNum, mode);
+            game.choices.Add("Le marché de Norbert");
+            game.inventory.Add("Commande de Norbert");
+            game.GoToPage(1);
         }
-        else if (choixNum == 2)
+        else if (choix == 2)
         {
-            Console.WriteLine("Norbert l'air déçu s'en va en laissant son stand derrière lui, vous décidez de récupérer une flasque de sa limonade sans trop savoir quoi en faire");
-            inventory.Add("Flacon de limonade");
-            HandleDrinkChoice(name, ageNum, mode);
+            game.Write("Norbert l'air déçu s'en va laissant son stand derrière lui, vous récupérez l'une de ses limonades imaginant qu'elle pourrait être utile si la soirée s'éternise");
+            Console.WriteLine();
+            game.choices.Add("Refus du marché de Norbert");
+            game.inventory.Add("Flacon de limonade");
+            game.GoToPage(1);
         }
         else
         {
-            Console.WriteLine("Choix invalide");
-            HandleNorbertChoice(name, ageNum, mode);
+            game.Write("Choix invalide.");
+            Console.WriteLine();
+            Run();
         }
     }
+}
 
-    static void DisplayIvresseState()
+class CombatChefPage : Page
+{
+    Ennemi chef = new Ennemi(50, 10, 20);
+    Random rng = new Random();
+    bool attaquePileOuFace = true; // alterne entre les deux attaques
+
+    public CombatChefPage(Game game) : base(game) { }
+
+    public override void Run()
     {
-        string etat = ivresse switch
-        {
-            < 10 => "Vous êtes parfaitement sobre, attention à ne pas passer pour un inspecteur du travail",
-            < 25 => "Vous êtes déjà au dessus du seuil d'alcoolémie et pourtant rien ne semble pouvoir vous arrêter",
-            < 40 => "Vous ne vous rappelez pas la dernière fois que vous avez",
-            < 60 => "Vous ne vous rappelez ni de la dernière fois que vous avez autant bu ni de votre prénom",
-            _ => "L'alcool a complètement dillué votre sang et irrigue maintenant vos veines... Félicitations vous êtes devenu une sorte d'attraction locale, le simple fait de passer à côté de vous suffi à apaiser les coeurs les plus lourds      Fin numéro 09 69 39 40 20 : coma idyllique"
-        };
+        game.Write("Vous constatez l'état laborieux des cuisines qui malgré votre appréhension est pire que ce que vous imaginiez, soudain le chef apparait, les yeux livides et la peau en décomposition... UN MORT VIANT !!!");
+        game.Write("Chef : BEUARGHHHHHHHH !!!!!");
+        game.Write("Combat engagé");
+        Console.WriteLine();
 
-        Console.WriteLine($"Votre ivresse est maintenant de {ivresse}. {etat}");
-        if (ivresse >= 60)
+        CombatLoop();
+    }
+
+    void CombatLoop()
+    {
+        while (true)
         {
-            ivresse = 0;
-            inventory = new List<string>();
-            Main();
+            // tour du joueur
+            if (game.player.blurryState)
+            {
+                game.Write("Votre vision est floue... Vous ne pouvez pas agir ce tour.");
+                Console.WriteLine();
+                game.player.blurryState = false; // effet de statut
+            }
+            else
+            {
+                game.Write("Que faites-vous ?   1. Attaquer   2. Boire de l'eau   3. Fuir");
+                int choix = AskInt();
+
+                if (choix == 1)
+                {
+                    int dmg = game.player.power;
+                    chef.InfligerDegats(dmg);
+                    game.Write($"Vous attaquez le chef et lui infligez {dmg} dégâts !");
+                    game.Write($"Le chef a {chef.hp} hp");
+                    Console.WriteLine();
+                }
+                else if (choix == 2)
+                {
+                    bool grosSoin = rng.Next(2) == 0; // 1 chance sur 2 que le heal soit critique
+                    int heal = grosSoin ? 15 : 10;
+                    game.player.drunkenness -= heal;
+                    if (game.player.drunkenness < 0) game.player.drunkenness = 0;
+
+                    game.Write($"Vous buvez de l'eau et réduisez votre ivresse de {heal}.");
+                    Console.WriteLine();
+                }
+                else if (choix == 3)
+                {
+                    bool fuite = rng.Next(4) != 0; // 3 chances sur 4 de parvenir à fuir le combat
+                    if (fuite)
+                    {
+                        game.Write("Vous fuyez le combat et vous retrouvez à nouveau dans le bar");
+                        Console.WriteLine();
+                        game.GoToPage(1);
+                        return;
+                    }
+                    else
+                    {
+                        game.Write("Vous tentez de fuir, mais le chef vous barre la route !");
+                        Console.WriteLine();
+                    }
+                }
+                else
+                {
+                    game.Write("Choix invalide.");
+                    Console.WriteLine();
+                    Run();
+                }
+            }
+
+            if (chef.hp <= 0)
+            {
+                game.Write("Le chef s'effondre, vaincu. Vous remportez le combat !");
+                Console.WriteLine();
+                game.player.money += chef.moneyDrop;
+                game.GoToPage(1);
+                return;
+            }
+
+            // tour de l'ennemi
+            if (attaquePileOuFace)
+            {
+                chef.AttaquePileOuFace(game.player);
+            }
+            else
+            {
+                chef.AttaqueVisionFloue(game.player);
+            }
+
+            attaquePileOuFace = !attaquePileOuFace; // le chef alterne entre ses 2 attaques
+
+            if (game.player.drunkenness >= game.player.lethalDrunkenness)
+            {
+                game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance et la soirée recommence depuis le début.");
+                Console.WriteLine();
+                game.Restart();
+                return;
+            }
         }
     }
 }

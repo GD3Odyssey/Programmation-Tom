@@ -13,7 +13,7 @@ class Program
 }
 class Player
 {
-    public int drunkenness;   // equivalent d'une barre de vie mais inversée, est aussi un système de réputation déguisé certaines interactions ne se déclenchent que à un certains niveau d'ivresse
+    public int drunkenness;   // equivalent d'une barre de vie mais inversee + couplee au systeme de power certaines boissons font augmenter le power
     public int lethalDrunkenness;
     public int power;
     public int money;
@@ -24,14 +24,13 @@ class Player
     {
         this.drunkenness = drunkenness;
         this.lethalDrunkenness = 100;
-        this.power = 10;
         this.money = 100;
     }
 }
 class Ennemi
 {
     public int hp;
-    public int hpMax;
+    public int hpMax = 200;
     public int power;
     public int moneyDrop;
 
@@ -40,19 +39,18 @@ class Ennemi
     private bool aExpliquePileOuFace = false;
     private bool aExpliqueVisionFloue = false;
 
-    public Ennemi(int hpMax, int power, int moneyDrop)
+    public Ennemi(int hp, int hpMax, int power, int moneyDrop)
     {
         this.hpMax = hpMax;
-        this.hp = hpMax;
+        this.hp = hp;
         this.power = power;
         this.moneyDrop = moneyDrop;
     }
 
     public bool InfligerDegats(int degats)
     {
-        this.hp -= degats;
-        this.hp -= Math.Clamp(this.hp, 0, this.hpMax);
-        return (this.hp == 0);
+        hp -= degats;
+        return hp == 200;
     }
 
     public void AttaquePileOuFace(Player player)
@@ -142,11 +140,13 @@ class Game
 
     public List<string> inventory = new List<string>();
     public List<string> choices = new List<string>();
+    public List<string> storySave = new List<string>();
     private List<Page> pages = new List<Page>();
 
     private int currentPage = 0;
 
     public string mode = "";
+    public string ending = "";
 
     public Game()
     {
@@ -160,6 +160,7 @@ class Game
         pages.Add(new NorbertLemonPage(this)); //page 2
         pages.Add(new LemonRefusePage(this)); //page 3
         pages.Add(new CombatChefPage(this)); //page 4
+        pages.Add(new EndingPage(this)); //page 5
     }
 
     public void Start()
@@ -184,6 +185,7 @@ class Game
         player = new Player();
         inventory.Clear();
         choices.Clear();
+        storySave.Clear();
         Start();
     }
 
@@ -213,9 +215,11 @@ class IntroPage : Page
 
     public override void Run()
     {
-        game.Write("À l'approche du célébrissime Royal Zgueg, vous vous remémorez les risques que vous encourez en entrant dans un pareil endroit, cette nuit les morts vivants pullulent vous n'avez qu'à attendre l'aube mais surtout vous devez échapper à l'emprise de ce lieu maudit qui semble avaler les gens qui y pénètrent...");
+        game.Write("À l'approche du célébrissime bar L'Assoiffé, vous vous remémorez les risques que vous encourez en entrant dans un pareil endroit, cette nuit les morts vivants pullulent vous n'avez qu'à attendre l'aube mais surtout vous devez échapper à l'emprise de ce lieu maudit qui semble avaler les gens qui y pénètrent...");
+        game.storySave.Add("À l'approche du célébrissime bar L'Assoiffé, vous vous remémorez les risques que vous encourez en entrant dans un pareil endroit, cette nuit les morts vivants pullulent vous n'avez qu'à attendre l'aube mais surtout vous devez échapper à l'emprise de ce lieu maudit qui semble avaler les gens qui y pénètrent...");
         Console.WriteLine();
-        game.Write("Serveuse : Bienvenue au Royal Zgueg, souhaitez-vous une table ou simplement commander ?   1.Une table   2.Je veux juste boire jusqu'à l'aube");
+        game.Write("Serveuse : Bienvenue à L'Assoiffé, souhaitez-vous une table ou simplement commander ?   1.Une table   2.Je veux juste boire jusqu'à l'aube");
+        game.storySave.Add("Serveuse : Bienvenue à L'Assoiffé, souhaitez-vous une table ou simplement commander ?");
         Console.WriteLine();
 
         int choix = AskInt();
@@ -252,17 +256,18 @@ class DrinkPage : Page
     public override void Run()
     {
         game.Write("Serveuse : Que souhaitez-vous boire ?");
+        game.storySave.Add("Serveuse : Que souhaitez-vous boire ?");
         Console.WriteLine();
         game.Write($"Vous avez actuellement {game.player.money} crédits.");
         game.Write($"Votre niveau d'ivresse est de {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
         Console.WriteLine();
 
-        int beer = 5;
-        int zgueg = 20;
+        int biere = 5;
+        int cercueil = 20;
         int norbert = 10;
         int soupe = 30;
 
-        game.Write($"1. Bière ({beer} crédits)    2. Royal Zgueg ({zgueg} crédits)   3. Jus de Norbert ({norbert} crédits)   4. Soupe du chef ({soupe} crédits)");
+        game.Write($"1. Bière ({biere} crédits)    2. Cercueil ({cercueil} crédits)   3. Jus de Norbert ({norbert} crédits)   4. Soupe du chef ({soupe} crédits)");
         Console.WriteLine();
 
         if (game.inventory.Contains("Commande de Norbert"))
@@ -278,6 +283,7 @@ class DrinkPage : Page
             game.inventory.Remove("Commande de Norbert");
             game.choices.Add("Utilisation du bon de commande");
             game.Write("Vous utilisez le bon de commande de Norbert et êtes convié en cuisine pour voir le chef");
+            game.storySave.Add("Vous utilisez le bon de commande de Norbert et êtes convié en cuisine pour voir le chef");
             Console.WriteLine();
             game.GoToPage(4);
             return;
@@ -285,8 +291,8 @@ class DrinkPage : Page
 
         int price = choix switch
         {
-            1 => beer,
-            2 => zgueg,
+            1 => biere,
+            2 => cercueil,
             3 => norbert,
             4 => soupe,
             _ => -1
@@ -294,7 +300,7 @@ class DrinkPage : Page
 
         if (price == -1)
         {
-            game.Write("Choix invalide.");
+            game.Write("Choix invalide");
             Console.WriteLine();
             Run();
             return;
@@ -302,9 +308,9 @@ class DrinkPage : Page
 
         if (game.player.money < price)
         {
-            game.Write($"Serveuse : Vous n'avez pas assez de crédits ({game.player.money}) pour payer {price}.");
+            game.Write($"Serveuse : Vous n'avez pas assez de crédits ({game.player.money}) pour {price}.");
             Console.WriteLine();
-            game.choices.Add("Choix invalide : Pas assez d'argent");
+            game.choices.Add("Pas assez d'argent");
             Run();
             return;
         }
@@ -317,21 +323,24 @@ class DrinkPage : Page
                 game.choices.Add("Boisson : Bière");
                 game.player.drunkenness += 10;
                 game.player.power += 5;
-                game.Write("Vous avez choisi une bière, un classique que vous vous empresserez de commander à nouveau jusqu'à ne plus tenir debout");
+                game.Write("Vous avez choisi une bière, un classique que vous vous empresserez de comander à nouveau jusqu'à ne plus tenir debout");
+                game.storySave.Add("Vous avez choisi une bière, un classique que vous vous empresserez de comander à nouveau jusqu'à ne plus tenir debout");
                 Console.WriteLine();
                 break;
 
             case 2:
-                game.choices.Add("Boisson : Royal Zgueg");
+                game.choices.Add("Boisson : Cercueil");
                 game.player.drunkenness += 30;
                 game.player.power += 20;
-                game.Write("Vous avez choisi le Royal Zgueg, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
+                game.Write("Vous avez choisi le Cercueil, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
+                game.storySave.Add("Vous avez choisi le Cercueil, un breuvage qui vous fera perdre la raison et vous fera danser toute la nuit, laissez vous transporter dans un univers onirique fait des rêves des précédents consommateurs et des hallucinations les plus étranges");
                 Console.WriteLine();
                 break;
 
             case 3:
                 game.choices.Add("Boisson : Jus de Norbert");
                 game.Write("Vous avez choisi le jus de Norbert, la barman vous indique un étrange stand où se trouve un gnome vendant une limonade aux arômes subtiles");
+                game.storySave.Add("Vous avez choisi le jus de Norbert, la barman vous indique un étrange stand où se trouve un gnome vendant une limonade aux arômes subtiles");
                 Console.WriteLine();
                 game.GoToPage(2);
                 return;
@@ -339,6 +348,7 @@ class DrinkPage : Page
             case 4:
                 game.choices.Add("Boisson : Soupe du chef");
                 game.Write("Vous avez choisi la soupe du chef et êtes convié en cuisine afin de le voir");
+                game.storySave.Add("Vous avez choisi la soupe du chef et êtes convié en cuisine afin de le voir");
                 Console.WriteLine();
                 game.GoToPage(4);
                 return;
@@ -349,9 +359,8 @@ class DrinkPage : Page
 
         if (game.player.drunkenness >= game.player.lethalDrunkenness)
         {
-            game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance et la soirée recommence depuis le début.");
-            Console.WriteLine();
-            game.Restart();
+            game.ending = "ivre mort";
+            game.GoToPage(5);
             return;
         }
 
@@ -366,6 +375,8 @@ class NorbertLemonPage : Page
     public override void Run()
     {
         game.Write("Le gnome d'un geste de la main vous indique sa limonade...   1. Tester la limonade   2. Rejeter l'offre");
+        game.storySave.Add("Le gnome d'un geste de la main vous indique sa limonade");
+
         Console.WriteLine();
 
         int choix = AskInt();
@@ -396,7 +407,9 @@ class LemonRefusePage : Page
 
     public override void Run()
     {
-        game.Write("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose, d'abord retournez au bar et ramenez moi une soupe, récupérez là gratuitement via ce bon de commande");
+        game.Write("Vous déclinez l'offre ce qui semble délier la langue du gnome   Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose, d'abord retournez au bar et ramenez moi une soupe, récupérez-la gratuitement via ce bon de commande");
+        game.storySave.Add("Vous déclinez l'offre ce qui semble délier la langue du gnome");
+        game.storySave.Add("Norbert : ah mon ami, vous souhaitiez donc me rencontrer pour affaires je suppose, d'abord retournez au bar et ramenez moi une soupe, récupérez-la gratuitement via ce bon de commande");
         game.Write("1. Accepter le marché   2. Refuser le marché");
         Console.WriteLine();
 
@@ -411,6 +424,7 @@ class LemonRefusePage : Page
         else if (choix == 2)
         {
             game.Write("Norbert l'air déçu s'en va laissant son stand derrière lui, vous récupérez l'une de ses limonades imaginant qu'elle pourrait être utile si la soirée s'éternise");
+            game.storySave.Add("Norbert l'air déçu s'en va laissant son stand derrière lui, vous récupérez l'une de ses limonades imaginant qu'elle pourrait être utile si la soirée s'éternise");
             Console.WriteLine();
             game.choices.Add("Refus du marché de Norbert");
             game.inventory.Add("Flacon de limonade");
@@ -427,7 +441,7 @@ class LemonRefusePage : Page
 
 class CombatChefPage : Page
 {
-    Ennemi chef = new Ennemi(50, 10, 20);
+    Ennemi chef = new Ennemi(200, 200, 10, 20);
     Random rng = new Random();
     bool attaquePileOuFace = true; // alterne entre les deux attaques
 
@@ -437,6 +451,8 @@ class CombatChefPage : Page
     {
         game.Write("Vous constatez l'état laborieux des cuisines qui malgré votre appréhension est pire que ce que vous imaginiez, soudain le chef apparait, les yeux livides et la peau en décomposition... UN MORT VIANT !!!");
         game.Write("Chef : BEUARGHHHHHHHH !!!!!");
+        game.storySave.Add("Vous constatez l'état laborieux des cuisines qui malgré votre appréhension est pire que ce que vous imaginiez, soudain le chef apparait, les yeux livides et la peau en décomposition... UN MORT VIANT !!!");
+        game.storySave.Add("Chef : BEUARGHHHHHHHH !!!!!");
         game.Write("Combat engagé");
         Console.WriteLine();
 
@@ -451,6 +467,7 @@ class CombatChefPage : Page
             if (game.player.blurryState)
             {
                 game.Write("Votre vision est floue... Vous ne pouvez pas agir ce tour.");
+                game.storySave.Add("Votre vision est a été troublée");
                 Console.WriteLine();
                 game.player.blurryState = false; // effet de statut
             }
@@ -464,6 +481,7 @@ class CombatChefPage : Page
                     int dmg = game.player.power;
                     chef.InfligerDegats(dmg);
                     game.Write($"Vous attaquez le chef et lui infligez {dmg} dégâts !");
+                    game.storySave.Add("Vous avez attaqué le chef !");
                     game.Write($"Le chef a {chef.hp} hp");
                     Console.WriteLine();
                 }
@@ -472,17 +490,20 @@ class CombatChefPage : Page
                     bool grosSoin = rng.Next(2) == 0; // 1 chance sur 2 que le heal soit critique
                     int heal = grosSoin ? 15 : 10;
                     game.player.drunkenness -= heal;
+                    game.player.power -= 5; // boire de l'eau fait perdre du power
                     if (game.player.drunkenness < 0) game.player.drunkenness = 0;
 
                     game.Write($"Vous buvez de l'eau et réduisez votre ivresse de {heal}.");
+                    game.storySave.Add("Vous avez bu de l'eau");
                     Console.WriteLine();
                 }
                 else if (choix == 3)
                 {
-                    bool fuite = rng.Next(4) != 0; // 3 chances sur 4 de parvenir à fuir le combat
+                    bool fuite = rng.Next(4) != 0; // 3 chances sur 4 de parvenir a fuir le combat
                     if (fuite)
                     {
                         game.Write("Vous fuyez le combat et vous retrouvez à nouveau dans le bar");
+                        game.storySave.Add("Vous avez fui le combat");
                         Console.WriteLine();
                         game.GoToPage(1);
                         return;
@@ -490,6 +511,7 @@ class CombatChefPage : Page
                     else
                     {
                         game.Write("Vous tentez de fuir, mais le chef vous barre la route !");
+                        game.storySave.Add("Vous avez tenté de fuir le combat et avez échoué");
                         Console.WriteLine();
                     }
                 }
@@ -503,10 +525,10 @@ class CombatChefPage : Page
 
             if (chef.hp <= 0)
             {
-                game.Write("Le chef s'effondre, vaincu. Vous remportez le combat !");
-                Console.WriteLine();
                 game.player.money += chef.moneyDrop;
-                game.GoToPage(1);
+
+                game.ending = "chef vaincu";
+                game.GoToPage(5);
                 return;
             }
 
@@ -524,11 +546,54 @@ class CombatChefPage : Page
 
             if (game.player.drunkenness >= game.player.lethalDrunkenness)
             {
-                game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance et la soirée recommence depuis le début.");
-                Console.WriteLine();
-                game.Restart();
+                game.ending = "ivre mort";
+                game.GoToPage(5);
                 return;
             }
+        }
+    }
+}
+
+class EndingPage : Page
+{
+    public EndingPage(Game game) : base(game) { }
+
+    public override void Run()
+    {
+        switch (game.ending)
+        {
+            case "ivre mort":
+                game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance");
+                Console.WriteLine();
+                break;
+
+            case "chef vaincu":
+                game.Write("Le chef s'effondre, vous remportez le combat");
+                Console.WriteLine();
+                break;
+        }
+            game.Write("Fin");
+            game.Write("Résumé :");
+            Console.WriteLine();
+
+        foreach (string sentence in game.storySave)
+            {
+                game.Write("- " + sentence);
+            Console.WriteLine();
+            }
+
+        Console.WriteLine();
+        game.Write($"Crédits restants : {game.player.money}");
+        game.Write($"Puissance finale : {game.player.power}");
+        game.Write($"Ivresse finale : {game.player.drunkenness} / {game.player.lethalDrunkenness}");
+        Console.WriteLine();
+
+        game.Write("1. Recommencer");
+        int choixFin = AskInt();
+
+        if (choixFin == 1)
+        {
+            game.Restart();
         }
     }
 }

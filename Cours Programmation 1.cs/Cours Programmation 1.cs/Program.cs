@@ -20,13 +20,48 @@ class Player
 
     public bool blurryState = false;
 
+    // Capacité récupérée après le combat contre le chef.
+    // Valeurs possibles : "", "Biere", "Soupe".
+    public string unlockedAttack = "";
+
+    // Bonus temporaire du flacon.
+    public int temporaryDrunkenness = 0;
+    public int temporaryDrunkennessTurns = 0;
+
     public Player(int drunkenness = 0)
     {
         this.drunkenness = drunkenness;
         this.lethalDrunkenness = 100;
         this.money = 100;
     }
+
+    public void EndPlayerTurn(Game game)
+    {
+        if (temporaryDrunkennessTurns <= 0)
+            return;
+
+        temporaryDrunkennessTurns--;
+
+        if (temporaryDrunkennessTurns == 0)
+        {
+            drunkenness -= temporaryDrunkenness;
+            drunkenness = Math.Max(0, drunkenness);
+
+            game.Write(
+                $"L'effet de la limonade se dissipe. " +
+                $"Vous perdez {temporaryDrunkenness} points d'ivresse temporaires."
+            );
+
+            game.Write(
+                $"Votre ivresse est maintenant de {drunkenness}."
+            );
+
+            temporaryDrunkenness = 0;
+            Console.WriteLine();
+        }
+    }
 }
+
 class Ennemi
 {
     public int hp;
@@ -151,6 +186,7 @@ class Game
     public Game()
     {
         RegisterPages();
+        UseLemonade();
     }
 
     private void RegisterPages()
@@ -160,7 +196,73 @@ class Game
         pages.Add(new NorbertLemonPage(this)); //page 2
         pages.Add(new LemonRefusePage(this)); //page 3
         pages.Add(new CombatChefPage(this)); //page 4
-        pages.Add(new EndingPage(this)); //page 5
+        pages.Add(new CombatServeusePage(this)); //page 5
+        pages.Add(new EndingPage(this)); //page 6
+    }
+
+    public bool UseLemonade()
+    {
+        if (!inventory.Contains("Flacon de limonade"))
+            return false;
+
+        // La confirmation n'apparaît que si le flacon
+        // ferait atteindre ou dépasser le seuil mortel.
+        if (player.drunkenness + 30 >= player.lethalDrunkenness)
+        {
+            Write(
+                "Attention ! Cette limonade risque de vous tuer " +
+                "en faisant atteindre votre seuil critique d'ivresse."
+            );
+
+            Write("Êtes-vous certain de vouloir la boire ?");
+            Write("1. Oui, je prends le risque");
+            Write("2. Non, annuler");
+
+            int confirmation;
+
+            while (true)
+            {
+                if (int.TryParse(Console.ReadLine(), out confirmation)
+                    && (confirmation == 1 || confirmation == 2))
+                    break;
+
+                Write("Choix invalide. Entrez 1 ou 2.");
+            }
+
+            if (confirmation == 2)
+            {
+                Write("Vous renoncez à boire la limonade.");
+                Console.WriteLine();
+                return false;
+            }
+
+            ending = "ivre mort";
+            GoToPage(6);
+            return true;
+        }
+
+        inventory.Remove("Flacon de limonade");
+
+        player.power += 15;
+        player.drunkenness += 30;
+
+        player.temporaryDrunkenness = 30;
+        player.temporaryDrunkennessTurns = 2;
+
+        choices.Add("Utilisation du flacon de limonade");
+        storySave.Add("Vous avez bu la limonade de Norbert.");
+
+        Write("Vous buvez la limonade de Norbert !");
+        Write("Votre puissance augmente définitivement de 15.");
+        Write("Votre ivresse augmente temporairement de 30.");
+        Write($"Puissance actuelle : {player.power}");
+        Write(
+            $"Ivresse actuelle : {player.drunkenness} / " +
+            $"{player.lethalDrunkenness}"
+        );
+
+        Console.WriteLine();
+        return true;
     }
 
     public void Start()

@@ -20,11 +20,10 @@ class Player
 
     public bool blurryState = false;
 
-    // Capacité récupérée après le combat contre le chef.
-    // Valeurs possibles : "", "Biere", "Soupe".
+    // capacite recuperee apres le combat contre le chef
     public string unlockedAttack = "";
 
-    // Bonus temporaire du flacon.
+    // bonus et malus temporaire du flacon
     public int temporaryDrunkenness = 0;
     public int temporaryDrunkennessTurns = 0;
 
@@ -32,6 +31,7 @@ class Player
     {
         this.drunkenness = drunkenness;
         this.lethalDrunkenness = 100;
+        this.power = 10;
         this.money = 100;
     }
 
@@ -47,14 +47,9 @@ class Player
             drunkenness -= temporaryDrunkenness;
             drunkenness = Math.Max(0, drunkenness);
 
-            game.Write(
-                $"L'effet de la limonade se dissipe. " +
-                $"Vous perdez {temporaryDrunkenness} points d'ivresse temporaires."
-            );
+            game.Write($"L'effet de la limonade se dissipe. Vous perdez {temporaryDrunkenness} points d'ivresse temporaires.");
 
-            game.Write(
-                $"Votre ivresse est maintenant de {drunkenness}."
-            );
+            game.Write($"Votre ivresse est maintenant de {drunkenness}.");
 
             temporaryDrunkenness = 0;
             Console.WriteLine();
@@ -85,7 +80,11 @@ class Ennemi
     public bool InfligerDegats(int degats)
     {
         hp -= degats;
-        return hp == 200;
+
+        if (hp < 0)
+            hp = 0;
+
+        return hp <= 0;
     }
 
     public void AttaquePileOuFace(Player player)
@@ -95,7 +94,7 @@ class Ennemi
 
         if (!aExpliquePileOuFace)
         {
-            Console.WriteLine("Lancer de bières : effectue un pile ou face, s'il est gagnant inflige 5 point de dégât et relance un pile ou face jusqu'à le perdre");
+            Console.WriteLine("Lancer de bières : effectue un pile ou face, s'il est gagnant inflige 5 point d'ivresse et relance un pile ou face jusqu'à le perdre");
             Console.WriteLine();
             aExpliquePileOuFace = true;
         }
@@ -126,7 +125,7 @@ class Ennemi
 
         if (!aExpliqueVisionFloue)
         {
-            Console.WriteLine("Soupe suspecte : inflige 10 points de dégât et a 1 chance sur 4 d'infliger le statut Vision floue qui fait passer le prochain tour de l'adversaire");
+            Console.WriteLine("Soupe suspecte : inflige 10 points d'ivresse et a 1 chance sur 4 d'infliger le statut Vision floue qui fait passer le prochain tour de l'adversaire");
             Console.WriteLine();
             aExpliqueVisionFloue = true;
         }
@@ -205,39 +204,33 @@ class Game
         if (!inventory.Contains("Flacon de limonade"))
             return false;
 
-        // La confirmation n'apparaît que si le flacon
-        // ferait atteindre ou dépasser le seuil mortel.
+        // alerte si le joueur s'apprete a se suicider
         if (player.drunkenness + 30 >= player.lethalDrunkenness)
         {
-            Write(
-                "Attention ! Cette limonade risque de vous tuer " +
-                "en faisant atteindre votre seuil critique d'ivresse."
-            );
+            Write("Attention !!  Votre ivresse est sur le point d'atteindre un niveau critique !!!");
 
-            Write("Êtes-vous certain de vouloir la boire ?");
-            Write("1. Oui, je prends le risque");
-            Write("2. Non, annuler");
+            Write("Voulez-vous vraiment boire cette limonade ?");
+            Write("1. Boire la limonade");
+            Write("2. Annuler");
 
             int confirmation;
 
             while (true)
             {
-                if (int.TryParse(Console.ReadLine(), out confirmation)
-                    && (confirmation == 1 || confirmation == 2))
+                if (int.TryParse(Console.ReadLine(), out confirmation) && (confirmation == 1 || confirmation == 2))
                     break;
 
-                Write("Choix invalide. Entrez 1 ou 2.");
+                Write("Choix invalide");
             }
 
             if (confirmation == 2)
             {
-                Write("Vous renoncez à boire la limonade.");
+                Write("Annulation");
                 Console.WriteLine();
                 return false;
             }
 
             ending = "ivre mort";
-            GoToPage(6);
             return true;
         }
 
@@ -253,13 +246,9 @@ class Game
         storySave.Add("Vous avez bu la limonade de Norbert.");
 
         Write("Vous buvez la limonade de Norbert !");
-        Write("Votre puissance augmente définitivement de 15.");
-        Write("Votre ivresse augmente temporairement de 30.");
+        Write("Votre puissance augmente de 15 et votre ivresse de 30 pendant les 2 prochains tours.");
         Write($"Puissance actuelle : {player.power}");
-        Write(
-            $"Ivresse actuelle : {player.drunkenness} / " +
-            $"{player.lethalDrunkenness}"
-        );
+        Write($"Ivresse actuelle : {player.drunkenness} / " + $"{player.lethalDrunkenness}");
 
         Console.WriteLine();
         return true;
@@ -285,11 +274,19 @@ class Game
     public void Restart()
     {
         player = new Player();
+
         inventory.Clear();
         choices.Clear();
         storySave.Clear();
+
+        mode = "";
+        ending = "";
+
+        pages.Clear();
+        RegisterPages();
+
         Start();
-    }
+    }   
 
     public void Write(string text)
     {
@@ -541,120 +538,647 @@ class LemonRefusePage : Page
     }
 }
 
+
 class CombatChefPage : Page
 {
-    Ennemi chef = new Ennemi(200, 200, 10, 20);
-    Random rng = new Random();
-    bool attaquePileOuFace = true; // alterne entre les deux attaques
+    private Ennemi chef = new Ennemi(200, 200, 10, 20);
+    private Random rng = new Random();
+
+    private bool attaquePileOuFace = true;
 
     public CombatChefPage(Game game) : base(game) { }
 
     public override void Run()
     {
-        game.Write("Vous constatez l'état laborieux des cuisines qui malgré votre appréhension est pire que ce que vous imaginiez, soudain le chef apparait, les yeux livides et la peau en décomposition... UN MORT VIANT !!!");
+        game.Write("Vous constatez l'état laborieux des cuisines qui, malgré votre appréhension, est pire que ce que vous imaginiez.");
+
+        game.Write("Soudain, le chef apparaît, les yeux livides et la peau en décomposition... UN MORT-VIVANT !");
+
         game.Write("Chef : BEUARGHHHHHHHH !!!!!");
-        game.storySave.Add("Vous constatez l'état laborieux des cuisines qui malgré votre appréhension est pire que ce que vous imaginiez, soudain le chef apparait, les yeux livides et la peau en décomposition... UN MORT VIANT !!!");
-        game.storySave.Add("Chef : BEUARGHHHHHHHH !!!!!");
         game.Write("Combat engagé");
         Console.WriteLine();
+
+        game.storySave.Add("Vous avez rencontré le chef mort-vivant dans les cuisines.");
 
         CombatLoop();
     }
 
-    void CombatLoop()
+    private void CombatLoop()
     {
         while (true)
         {
-            // tour du joueur
+            bool tourConsomme = false;
+
+            // Tour du joueur
             if (game.player.blurryState)
             {
                 game.Write("Votre vision est floue... Vous ne pouvez pas agir ce tour.");
-                game.storySave.Add("Votre vision est a été troublée");
-                Console.WriteLine();
-                game.player.blurryState = false; // effet de statut
+
+                game.storySave.Add("Votre vision a été troublée.");
+
+                game.player.blurryState = false;
+                tourConsomme = true;
             }
             else
             {
-                game.Write("Que faites-vous ?   1. Attaquer   2. Boire de l'eau   3. Fuir");
+                int optionFlacon = game.inventory.Contains("Flacon de limonade") ? 4 : -1;
+
+                game.Write("Que faites-vous ?");
+                game.Write("1. Attaquer");
+                game.Write("2. Boire de l'eau");
+                game.Write("3. Fuir");
+
+                if (optionFlacon != -1)
+                    game.Write("4. Utiliser le flacon de limonade");
+
                 int choix = AskInt();
 
                 if (choix == 1)
                 {
-                    int dmg = game.player.power;
-                    chef.InfligerDegats(dmg);
-                    game.Write($"Vous attaquez le chef et lui infligez {dmg} dégâts !");
-                    game.storySave.Add("Vous avez attaqué le chef !");
-                    game.Write($"Le chef a {chef.hp} hp");
-                    Console.WriteLine();
+                    int degats = game.player.power;
+
+                    chef.InfligerDegats(degats);
+
+                    game.Write($"Vous attaquez le chef et lui infligez {degats} dégâts !");
+
+                    game.Write($"Le chef possède {chef.hp} / {chef.hpMax} PV.");
+
+                    game.storySave.Add("Vous avez attaqué le chef.");
+
+                    tourConsomme = true;
                 }
                 else if (choix == 2)
                 {
-                    bool grosSoin = rng.Next(2) == 0; // 1 chance sur 2 que le heal soit critique
-                    int heal = grosSoin ? 15 : 10;
-                    game.player.drunkenness -= heal;
-                    game.player.power -= 5; // boire de l'eau fait perdre du power
-                    if (game.player.drunkenness < 0) game.player.drunkenness = 0;
+                    // le soin fait baisser le power
+                    bool grosSoin = rng.Next(2) == 0;
+                    int soin = grosSoin ? 40 : 20;
 
-                    game.Write($"Vous buvez de l'eau et réduisez votre ivresse de {heal}.");
-                    game.storySave.Add("Vous avez bu de l'eau");
-                    Console.WriteLine();
+                    game.player.drunkenness -= soin;
+                    game.player.power -= 5;
+
+                    if (game.player.drunkenness < 0)
+                        game.player.drunkenness = 0;
+
+                    if (game.player.power < 0)
+                        game.player.power = 0;
+
+                    game.Write($"Vous buvez de l'eau et réduisez votre ivresse de {soin}.");
+
+                    game.Write($"Votre puissance diminue de 5 : {game.player.power}.");
+
+                    game.storySave.Add("Vous avez bu de l'eau.");
+
+                    tourConsomme = true;
                 }
                 else if (choix == 3)
                 {
-                    bool fuite = rng.Next(4) != 0; // 3 chances sur 4 de parvenir a fuir le combat
+                    bool fuite = rng.Next(4) != 0;
+
                     if (fuite)
                     {
-                        game.Write("Vous fuyez le combat et vous retrouvez à nouveau dans le bar");
-                        game.storySave.Add("Vous avez fui le combat");
-                        Console.WriteLine();
+                        game.Write("Vous fuyez le combat et retournez dans le bar.");
+
+                        game.storySave.Add("Vous avez fui le combat.");
+
                         game.GoToPage(1);
                         return;
                     }
-                    else
+
+                    game.Write("Vous tentez de fuir, mais le chef vous barre la route !");
+
+                    game.storySave.Add("Vous avez tenté de fuir le combat et avez échoué.");
+
+                    tourConsomme = true;
+                }
+                else if (choix == optionFlacon && optionFlacon != -1)
+                {
+                    bool utilise = game.UseLemonade();
+
+                    if (game.ending == "ivre mort")
                     {
-                        game.Write("Vous tentez de fuir, mais le chef vous barre la route !");
-                        game.storySave.Add("Vous avez tenté de fuir le combat et avez échoué");
-                        Console.WriteLine();
+                        game.GoToPage(6);
+                        return;
                     }
+
+                    // securite le tour n'est pas utilise
+                    if (!utilise)
+                        continue;
+
+                    tourConsomme = true;
                 }
                 else
                 {
                     game.Write("Choix invalide.");
                     Console.WriteLine();
-                    Run();
+                    continue;
                 }
             }
 
+            if (tourConsomme)
+                game.player.EndPlayerTurn(game);
+
+            // securite si le chef meurt le combat ne se poursuit pas
             if (chef.hp <= 0)
             {
-                game.player.money += chef.moneyDrop;
-
-                game.ending = "chef vaincu";
-                game.GoToPage(5);
+                VaincreChef();
                 return;
             }
 
-            // tour de l'ennemi
-            if (attaquePileOuFace)
+            // securite si le joueur meurt le combat ne se poursuit pas
+            if (game.player.drunkenness >= game.player.lethalDrunkenness)
             {
-                chef.AttaquePileOuFace(game.player);
-            }
-            else
-            {
-                chef.AttaqueVisionFloue(game.player);
+                game.ending = "ivre mort";
+                game.GoToPage(6);
+                return;
             }
 
-            attaquePileOuFace = !attaquePileOuFace; // le chef alterne entre ses 2 attaques
+            // Tour du chef
+            if (attaquePileOuFace)
+                chef.AttaquePileOuFace(game.player);
+            else
+                chef.AttaqueVisionFloue(game.player);
+
+            attaquePileOuFace = !attaquePileOuFace;
 
             if (game.player.drunkenness >= game.player.lethalDrunkenness)
             {
                 game.ending = "ivre mort";
-                game.GoToPage(5);
+                game.GoToPage(6);
                 return;
             }
         }
     }
+
+    private void VaincreChef()
+    {
+        game.player.money += chef.moneyDrop;
+
+        game.Write("Le chef s'effondre ! Vous remportez le combat.");
+        game.Write($"Vous récupérez {chef.moneyDrop} crédits. Vous possédez maintenant {game.player.money} crédits.");
+
+        game.storySave.Add("Vous avez vaincu le chef.");
+
+        game.Write("Le chef laisse derrière lui ses deux techniques...");
+        game.Write("Laquelle souhaitez-vous récupérer ?");
+        game.Write("1. Lancer de bières : effectue un pile ou face, s'il est gagnant inflige 5 point de dégât et relance un pile ou face jusqu'à le perdre");
+        game.Write("2. Soupe suspecte : inflige 10 points de dégât et a 1 chance sur 4 d'infliger le statut Vision floue qui fait passer le prochain tour de l'adversaire");
+
+        int choix;
+
+        while (true)
+        {
+            choix = AskInt();
+
+            if (choix == 1 || choix == 2)
+                break;
+
+            game.Write("Choix invalide");
+        }
+
+        if (choix == 1)
+        {
+            game.player.unlockedAttack = "Biere";
+
+            game.Write("Vous apprenez Lancer de bières.");
+
+            game.choices.Add("Capacité récupérée : Lancer de bières");
+        }
+        else
+        {
+            game.player.unlockedAttack = "Soupe";
+
+            game.Write("Vous apprenez Soupe suspecte.");
+
+            game.choices.Add("Capacité récupérée : Soupe suspecte");
+        }
+
+        Console.WriteLine();
+
+        game.GoToPage(5);
+    }
 }
+
+
+class CombatServeusePage : Page
+{
+    private Ennemi serveuse = new Ennemi(180, 180, 10, 0);
+    private Random rng = new Random();
+    private bool aExpliqueBiere = false;
+    private bool aExpliqueCercueil = false;
+    private bool aExpliqueImmolation = false;
+
+    // attaque : biere a retardement
+    private bool biereLancee = false;
+    private int biereEnAttente = 0;
+
+    // attaque : cercueil
+    private int cumulCercueil = 0;
+    private int pairsConsecutifs = 0;
+    private bool immolationForcee = false;
+
+    // attaque immolation qui devient declenchable en dessous de 50% des PV max
+    private bool prochaineAttaqueImmolation = false;
+
+    // effet de soupe suspecte
+    private bool serveuseEtourdie = false;
+
+    public CombatServeusePage(Game game) : base(game) { }
+
+    public override void Run()
+    {
+        game.Write("Vous sortez des cuisines, mais la serveuse se dresse devant vous.");
+
+        game.Write("Son visage se déforme de rage. Elle saisit plusieurs bouteilles.");
+
+        game.Write("Serveuse : VOUS AVEZ OSÉ TOUCHER À MON CHEF ?!");
+
+        game.Write("Combat engagé !");
+        Console.WriteLine();
+
+        game.storySave.Add("Vous affrontez la serveuse, ivre de rage.");
+
+        CombatLoop();
+    }
+
+    private void CombatLoop()
+    {
+        while (true)
+        {
+            if (biereLancee && biereEnAttente > 0)
+            {
+                if (rng.Next(2) == 0)
+                {
+                    biereEnAttente *= 2;
+
+                    game.Write("Réussite : La Bière à retardement s'intensifie ! Les dégâts d'ivresse en attente doublent.");
+                }
+                else
+                {
+                    game.Write("Echec : La Bière à retardement ne s'intensifie pas.");
+                }
+
+                game.player.drunkenness += biereEnAttente;
+
+                game.Write($"Vous subissez {biereEnAttente} points d'ivresse supplémentaires.");
+
+                game.Write($"Votre ivresse : {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
+
+                Console.WriteLine();
+
+                if (VerifierMortJoueur())
+                    return;
+            }
+
+            // Tour du joueur
+
+            int optionCapacite = game.player.unlockedAttack != "" ? 4 : -1;
+
+             int optionFlacon = game.inventory.Contains("Flacon de limonade") ? (optionCapacite != -1 ? 5 : 4) : -1;
+
+             game.Write("Que faites-vous ?");
+             game.Write("1. Attaquer");
+             game.Write("2. Boire de l'eau");
+             game.Write("3. Fuir");
+
+             if (optionCapacite != -1)
+                 game.Write($"4. Utiliser : {NomCapacite()}");
+
+             if (optionFlacon != -1)
+                 game.Write($"{optionFlacon}. Utiliser le flacon de limonade");
+
+             int choix = AskInt();
+
+             if (choix == 1)
+             {
+                 int degats = game.player.power;
+
+                 serveuse.InfligerDegats(degats);
+
+                 game.Write($"Vous attaquez la serveuse et infligez {degats} dégâts !");
+
+                 game.Write($"Serveuse : {serveuse.hp} / {serveuse.hpMax} PV.");
+
+                 game.storySave.Add("Vous avez attaqué la serveuse.");
+
+                 game.player.EndPlayerTurn(game);
+             }
+             else if (choix == 2)
+             {
+                 bool grosSoin = rng.Next(2) == 0;
+                 int soin = grosSoin ? 40 : 20;
+                 game.player.drunkenness -= soin;
+                 game.player.power -= 5;
+
+                 game.player.drunkenness = Math.Max(0, game.player.drunkenness);
+
+                 game.player.power = Math.Max(0, game.player.power);
+
+                 game.Write($"Vous buvez de l'eau et réduisez votre ivresse de {soin}.");
+
+                 game.Write($"Votre puissance est maintenant de {game.player.power}.");
+
+                 game.storySave.Add("Vous avez bu de l'eau.");
+
+                 game.player.EndPlayerTurn(game);
+             }
+             else if (choix == 3)
+             {
+                 bool fuite = rng.Next(4) != 0;
+
+                 if (fuite)
+                 {
+                     game.Write("Vous parvenez à fuir la serveuse et retournez au bar.");
+
+                     game.storySave.Add("Vous avez fui le combat contre la serveuse.");
+
+                     game.GoToPage(1);
+                     return;
+                 }
+
+                 game.Write("La serveuse vous barre la route et vous empêche de fuir !");
+
+                 game.storySave.Add("Votre tentative de fuite a échoué.");
+
+                 game.player.EndPlayerTurn(game);
+             }
+             else if (choix == optionCapacite && optionCapacite != -1)
+             {
+                 UtiliserCapacite();
+
+                 game.player.EndPlayerTurn(game);
+             }
+             else if (choix == optionFlacon && optionFlacon != -1)
+             {
+                bool utilise = game.UseLemonade();
+
+                if (game.ending == "ivre mort")
+                {
+                    game.GoToPage(6);
+                    return;
+                }
+
+                if (!utilise)
+                     continue;
+
+                 game.player.EndPlayerTurn(game);
+             }
+             else
+             {
+                 game.Write("Choix invalide");
+                 Console.WriteLine();
+                 continue;
+             }
+
+            if (serveuse.hp <= 0)
+            {
+                VaincreServeuse();
+                return;
+            }
+
+            if (VerifierMortJoueur())
+                return;
+
+            // Tour de la serveuse
+            if (serveuseEtourdie)
+            {
+                game.Write("La serveuse titube, incapable d'agir, son tour est passé.");
+
+                serveuseEtourdie = false;
+            }
+            else
+            {
+                AttaqueServeuse();
+
+                if (VerifierMortJoueur())
+                    return;
+
+                if (serveuse.hp <= 0)
+                {
+                    VaincreServeuse();
+                    return;
+                }
+            }
+        }
+    }
+
+    private string NomCapacite()
+    {
+        return game.player.unlockedAttack == "Biere" ? "Lancer de bières" : "Soupe suspecte";
+    }
+
+    private void UtiliserCapacite()
+    {
+        if (game.player.unlockedAttack == "Biere")
+        {
+            game.Write("Vous lancez une salve de bières sur la serveuse !");
+
+            while (true)
+            {
+                bool reussite = rng.Next(2) == 0;
+
+                if (!reussite)
+                {
+                    game.Write("Face ! Votre série s'interrompt.");
+
+                    break;
+                }
+
+                int degats = game.player.power;
+
+                serveuse.InfligerDegats(degats);
+
+                game.Write($"Pile ! Vous infligez {degats} dégâts à la serveuse.");
+
+                if (serveuse.hp <= 0)
+                    break;
+            }
+        }
+        else if (game.player.unlockedAttack == "Soupe")
+        {
+            int degats = game.player.power;
+
+            serveuse.InfligerDegats(degats);
+
+            game.Write($"Vous envoyez une soupe suspecte : {degats} dégâts !");
+
+            if (rng.Next(4) == 0)
+            {
+                serveuseEtourdie = true;
+
+                game.Write("Réussite : La serveuse est étourdie !");
+            }
+            else
+            {
+                game.Write("Echec : La serveuse encaisse l'attaque et se prépare à riposter.");
+            }
+        }
+
+        game.storySave.Add($"Vous avez utilisé la capacité : {NomCapacite()}.");
+
+        Console.WriteLine();
+    }
+
+    private void AttaqueServeuse()
+    {
+        // premiere attaque : Biere a retardement
+        if (!biereLancee)
+        {
+            AttaqueBiereRetardement();
+            return;
+        }
+
+        // si les cumuls du cercueil sont annules alors l'immolation est forcee
+        if (immolationForcee)
+        {
+            immolationForcee = false;
+            prochaineAttaqueImmolation = false;
+
+            AttaqueImmolation();
+            return;
+        }
+
+        // rotation entre cercueil et immolation si les PV sont sous 50% des PV max
+        if (serveuse.hp < serveuse.hpMax * 0.5f)
+        {
+            if (prochaineAttaqueImmolation)
+            {
+                prochaineAttaqueImmolation = false;
+                AttaqueImmolation();
+            }
+            else
+            {
+                prochaineAttaqueImmolation = true;
+                AttaqueCercueil();
+            }
+
+            return;
+        }
+
+        AttaqueCercueil();
+    }
+
+    private void AttaqueBiereRetardement()
+    {
+        game.Write("Serveuse : ATTRAPEZ ÇA !");
+
+        game.Write("La serveuse lance l'attaque Bière à retardement, elle envoie une bouteille semblant instable.");
+
+        if (!aExpliqueBiere)
+        {
+            game.Write("Bière à retardement : inflige 5 points d'ivresse au lancement. Au début de chaque tour du joueur, le montant en attente a une chance sur deux de doubler avant d'être infligé.");
+
+            aExpliqueBiere = true;
+        }
+
+        biereLancee = true;
+        biereEnAttente = 5;
+
+        game.player.drunkenness += 5;
+
+        game.Write("La bouteille éclate ! Votre ivresse augmente de 5.");
+
+        game.Write($"Votre ivresse : {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
+
+        Console.WriteLine();
+    }
+
+    private void AttaqueCercueil()
+    {
+        game.Write("Serveuse : C'EST L'HEURE DU CERCUEIL");
+
+        game.Write("La serveuse lance l'attaque Cercueil, elle attrape tous les restes d'alcool qu'elle trouve pour en faire un cocktail explosif.");
+
+        if (!aExpliqueCercueil)
+        {
+            game.Write("Cercueil : génère un montant aléatoire entre 5 et 20. Ce montant s'ajoute au cumul des utilisations précédentes. Trois résultats pairs consécutifs réinitialisent le cumul à 5 et imposent une Immolation au tour suivant.");
+
+            aExpliqueCercueil = true;
+        }
+
+        int resultat = rng.Next(5, 21);
+
+        cumulCercueil += resultat;
+
+        if (resultat % 2 == 0)
+            pairsConsecutifs++;
+        else
+            pairsConsecutifs = 0;
+
+        game.player.drunkenness += cumulCercueil;
+
+        game.Write($"Réussite : La serveuse ajoute un nouvel alcool à son Cercueil, ajoute {resultat} au cumul.");
+
+        game.Write($"Vous subissez {cumulCercueil} points d'ivresse.");
+
+        game.Write($"Votre ivresse : {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
+
+        if (pairsConsecutifs >= 3)
+        {
+            game.Write("Echec : La serveuse ajoute de l'eau qui vient dillué le Cercueil.");
+
+            game.Write("Son cumul repart à 5. La serveuse ivre de rage prépare une Immolation !");
+
+            cumulCercueil = 5;
+            pairsConsecutifs = 0;
+            immolationForcee = true;
+        }
+
+        Console.WriteLine();
+    }
+
+    private void AttaqueImmolation()
+    {
+        game.Write("Serveuse : BRÛLEZ AVEC MOI !");
+
+        if (!aExpliqueImmolation)
+        {
+            game.Write("Immolation : la serveuse sacrifie la moitié de ses PV actuels et inflige cette même quantité d'ivresse au joueur.");
+
+            aExpliqueImmolation = true;
+        }
+
+        int sacrifice = Math.Max(1, serveuse.hp / 2);
+
+        serveuse.hp -= sacrifice;
+        serveuse.hp = Math.Max(0, serveuse.hp);
+
+        game.player.drunkenness += sacrifice;
+
+        game.Write($"La serveuse sacrifie {sacrifice} PV !");
+
+        game.Write($"Elle possède maintenant {serveuse.hp} / {serveuse.hpMax} PV.");
+
+        game.Write(
+            $"Vous subissez {sacrifice} points d'ivresse."
+        );
+
+        game.Write($"Votre ivresse : {game.player.drunkenness} / {game.player.lethalDrunkenness}.");
+
+        Console.WriteLine();
+    }
+
+    private bool VerifierMortJoueur()
+    {
+        if (game.player.drunkenness < game.player.lethalDrunkenness)
+            return false;
+
+        game.ending = "ivre mort";
+        game.GoToPage(6);
+
+        return true;
+    }
+
+    private void VaincreServeuse()
+    {
+        game.Write("La serveuse s'effondre, incapable de poursuivre le combat.");
+
+        game.storySave.Add("Vous avez vaincu la serveuse.");
+
+        game.ending = "serveuse vaincue";
+        game.GoToPage(6);
+    }
+}
+
 
 class EndingPage : Page
 {
@@ -669,8 +1193,9 @@ class EndingPage : Page
                 Console.WriteLine();
                 break;
 
-            case "chef vaincu":
-                game.Write("Le chef s'effondre, vous remportez le combat");
+            case "serveuse vaincue":
+                game.Write("La serveuse s'effondre. Le bar retrouve enfin son calme...");
+                game.Write("Vous avez survécu à une interminable nuit.");
                 Console.WriteLine();
                 break;
         }
@@ -681,7 +1206,7 @@ class EndingPage : Page
         foreach (string sentence in game.storySave)
             {
                 game.Write("- " + sentence);
-            Console.WriteLine();
+                Console.WriteLine();
             }
 
         Console.WriteLine();

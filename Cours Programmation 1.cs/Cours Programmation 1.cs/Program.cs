@@ -204,7 +204,7 @@ class Game
         if (!inventory.Contains("Flacon de limonade"))
             return false;
 
-        // alerte si le joueur s'apprete a se suicider
+        // alerte si le joueur s'apprete a se tuer
         if (player.drunkenness + 30 >= player.lethalDrunkenness)
         {
             Write("Attention !!  Votre ivresse est sur le point d'atteindre un niveau critique !!!");
@@ -1189,13 +1189,13 @@ class EndingPage : Page
         switch (game.ending)
         {
             case "ivre mort":
-                game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance");
+                game.Write("Votre ivresse atteint un niveau critique... Vous perdez connaissance et vous remémorez les médiocres choix qui vous ont conduits à finir dans cet état...");
                 Console.WriteLine();
                 break;
 
             case "serveuse vaincue":
                 game.Write("La serveuse s'effondre. Le bar retrouve enfin son calme...");
-                game.Write("Vous avez survécu à une interminable nuit.");
+                game.Write("Vous avez survécu et sur le chemin pour rentrer chez vous, vous faites le bilan de cette interminable nuit.");
                 Console.WriteLine();
                 break;
         }
@@ -1221,6 +1221,13 @@ class EndingPage : Page
         if (choixFin == 1)
         {
             game.Restart();
+        }
+        else
+        {
+            game.Write("Choix invalide");
+            Console.WriteLine();
+            Run();
+            return;
         }
     }
 }
